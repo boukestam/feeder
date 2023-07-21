@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@types/node": "^20.4.2",
+    "fast-xml-parser": "^4.2.6",
+    "handlebars": "^4.7.7",
+    "sqlite-async": "ndp/sqlite-async#13-typescript",
+    "sqlite3": "^5.1.6",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "scripts": {
+    "start": "ts-node src/index.ts"
+  }
+}
