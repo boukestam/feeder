@@ -42,6 +42,8 @@ const feeds: Feed[] = [
       const pointsMatch = item.description.match(pointsRegex);
       if (!pointsMatch) return false;
 
+      item.date = new Date();
+
       const points = parseInt(pointsMatch[1]);
       return points > 100;
     }
