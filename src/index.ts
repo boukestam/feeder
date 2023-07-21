@@ -97,6 +97,17 @@ async function refresh(db: Database) {
 async function run() {
   const db = await Database.open('./data.db');
 
+  await db.run(`CREATE TABLE IF NOT EXISTS Items (
+    GUID        TEXT    PRIMARY KEY
+                        UNIQUE
+                        NOT NULL,
+    Title       TEXT,
+    Link        TEXT,
+    Description TEXT,
+    Date        INTEGER,
+    Image       TEXT
+  );`);
+
   http.createServer(function (req, res) {
     db.all("SELECT * FROM Items ORDER BY date DESC LIMIT 100").then((rows: any[]) => {
       for (const row of rows) {
