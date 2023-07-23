@@ -3,18 +3,19 @@ import { stripHTML } from "./util";
 import { extract } from 'article-parser';
 import { encoding_for_model } from "@dqbd/tiktoken";
 import puppeteer from 'puppeteer';
+import { convert } from "html-to-text";
 
 const prompt = "Summize the article below in bullet-point TLDR form, in the same language as the article is written in.\n\n";
 
 const cache = new Map<string, string[]>();
-const maxCacheSize = 25;
+const maxCacheSize = 100;
 
 export async function summarize(url: string): Promise<string[]> {
   if (cache.has(url)) {
     return cache.get(url);
   }
 
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const browser = await puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
 
   await page.goto(url, { waitUntil: 'networkidle0' });
@@ -23,7 +24,9 @@ export async function summarize(url: string): Promise<string[]> {
   await browser.close();
 
   const article = await extract(data);
-  const text = stripHTML(article.content);
+  const text = article ? stripHTML(article.content) : convert(data, { wordwrap: false });
+
+  console.log(text);
 
   const enc = encoding_for_model("gpt-3.5-turbo");
   const tokens = enc.encode(text);
