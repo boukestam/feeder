@@ -1,8 +1,8 @@
 import { Database } from 'sqlite-async';
 import { RSSItem, fetchRSS } from './rss';
-import http from "http";
-import fs from "fs";
-import { compile } from "handlebars";
+import { startServer } from './server';
+
+require('dotenv').config();
 
 interface Feed {
   url: string;
@@ -51,6 +51,12 @@ const feeds: Feed[] = [
   ...twitterFollows.map(twitterFeed),
   ...youtubeFollows.map(youtubeFeed)
 ];
+
+if (process.env.DISABLE_FETCH) {
+  for (const feed of feeds) {
+    feed.lastRefresh = Number.MAX_SAFE_INTEGER;
+  }
+}
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -110,59 +116,7 @@ async function run() {
     Image       TEXT
   );`);
 
-  http.createServer(function (req, res) {
-    db.all("SELECT * FROM Items ORDER BY date DESC LIMIT 100").then((rows: any[]) => {
-      for (const row of rows) {
-        const date = new Date(row.Date);
-        // 17/07/2023
-        row.Date = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-
-        // 17:32
-        row.Time = `${date.getHours()}:${date.getMinutes()}`;
-
-        // 2 hours ago
-        const diff = (Date.now() - date.getTime()) / 1000;
-        if (diff < 60) {
-          row.Ago = `${Math.round(diff)} seconds ago`;
-        } else if (diff < 60 * 60) {
-          row.Ago = `${Math.round(diff / 60)} minutes ago`;
-        } else if (diff < 60 * 60 * 24) {
-          row.Ago = `${Math.round(diff / (60 * 60))} hours ago`;
-        } else {
-          row.Ago = `${Math.round(diff / (60 * 60 * 24))} days ago`;
-        }
-
-        if (!row.Image) {
-          // Check for image in description
-          const imageRegex = /src="(.*?)"/;
-          const imageMatch = row.Description.match(imageRegex);
-
-          if (imageMatch) {
-            row.Image = imageMatch[1];
-          } else {
-            // Hacker news
-            row.Image = "https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/hacker-news-icon.png";
-
-            const commentsRegex = /Comments URL: <a href="(.*?)">/;
-            const commentsMatch = row.Description.match(commentsRegex);
-
-            if (commentsMatch) {
-              row.Comments = commentsMatch[1];
-            }
-          }
-        }
-      }
-
-      fs.readFile("./index.hbs", "utf8", (err, data) => {
-        const template = compile(data);
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(template({ items: rows }));
-      });
-    }).catch(e => {
-      res.writeHead(500);
-      res.end();
-    });
-  }).listen(80);
+  startServer(db);
 
   while (true) {
     await refresh(db);

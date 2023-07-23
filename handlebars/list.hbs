@@ -1,0 +1,33 @@
+<div class="items">
+  {{#each items}}
+  <div class="item">
+    <a href="{{this.Link}}">
+      <div class="image">
+        <img src="{{this.Image}}" />
+      </div>
+    </a>
+
+    <div class="item-body">
+      <a href="{{this.Link}}">
+        <div>{{this.Title}}</div>
+      </a>
+
+      <div class="info">
+        <div>{{this.Ago}}</div>
+
+        <div class="comments">
+          |
+          <a href="/summary/{{this.GUID}}">summary</a>
+        </div>
+
+        {{#if this.Comments}}
+        <div class="comments">
+          |
+          <a href="{{this.Comments}}">comments</a>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+  {{/each}}
+</div>
