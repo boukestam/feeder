@@ -4,6 +4,7 @@ import { extract } from 'article-parser';
 import { encoding_for_model } from "@dqbd/tiktoken";
 import puppeteer from 'puppeteer';
 import { convert } from "html-to-text";
+import { getRandomProxy } from "./proxy";
 
 const prompt = "Summize the article below in bullet-point TLDR form, in the same language as the article is written in.\n\n";
 
@@ -15,10 +16,23 @@ export async function summarize(url: string): Promise<string[]> {
     return cache.get(url);
   }
 
-  const browser = await puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const proxy = await getRandomProxy();
+
+  const browser = await puppeteer.launch({
+    headless: "new",
+    args: [
+      "--proxy-server=http=" + proxy,
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"'
+    ]
+  });
+
   const page = await browser.newPage();
 
   await page.goto(url, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('body');
+
   const data = await page.evaluate(() => document.querySelector('*').outerHTML);
 
   await browser.close();
