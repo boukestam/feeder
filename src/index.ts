@@ -52,7 +52,7 @@ const feeds: Feed[] = [
   ...youtubeFollows.map(youtubeFeed)
 ];
 
-if (process.env.DISABLE_FETCH) {
+if (process.env.DISABLE_FETCH === "true") {
   for (const feed of feeds) {
     feed.lastRefresh = Number.MAX_SAFE_INTEGER;
   }

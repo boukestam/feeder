@@ -2,9 +2,8 @@ import { Configuration, OpenAIApi } from "openai";
 import { stripHTML } from "./util";
 import { extract } from 'article-parser';
 import { encoding_for_model } from "@dqbd/tiktoken";
-import puppeteer from 'puppeteer';
 import { convert } from "html-to-text";
-import { getRandomProxy } from "./proxy";
+import { browse } from "./browse";
 
 const prompt = "Summize the article below in bullet-point TLDR form, in the same language as the article is written in.\n\n";
 
@@ -16,31 +15,10 @@ export async function summarize(url: string): Promise<string[]> {
     return cache.get(url);
   }
 
-  const proxy = await getRandomProxy();
-
-  const browser = await puppeteer.launch({
-    headless: "new",
-    args: [
-      "--proxy-server=http=" + proxy,
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"'
-    ]
-  });
-
-  const page = await browser.newPage();
-
-  await page.goto(url, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('body');
-
-  const data = await page.evaluate(() => document.querySelector('*').outerHTML);
-
-  await browser.close();
+  const data = await browse(url);
 
   const article = await extract(data);
   const text = article ? stripHTML(article.content) : convert(data, { wordwrap: false });
-
-  console.log(text);
 
   const enc = encoding_for_model("gpt-3.5-turbo");
   const tokens = enc.encode(text);
