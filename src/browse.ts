@@ -13,6 +13,12 @@ export async function browse(url: string): Promise<string> {
       "--proxy-server=http=" + proxy,
       '--no-sandbox',
       '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--single-process',
+      '--no-first-run',
+      '--no-zygote',
       '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"'
     ]
   });
@@ -28,5 +34,8 @@ export async function browse(url: string): Promise<string> {
     throw e;
   } finally {
     await browser.close();
+
+    // Force close browser process
+    if (browser && browser.process() != null) browser.process().kill('SIGINT');
   }
 }
